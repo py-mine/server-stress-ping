@@ -45,11 +45,11 @@ async def main():
 
     await asyncio.wait(tasks)
 
-    times = [t.result() for t in tasks]
+    times = [t for t in [t.result() for t in tasks] if t != -1]
 
     avg = round((sum(times) / len(times)) * 1000, 2)
     max_ = round(max(times) * 1000, 2)
 
-    print(f'Average: {avg}ms | Max: {max_}ms')
+    print(f'Average: {avg}ms | Max: {max_}ms | Dropped: {len(tasks)-len(times)}')
 
 asyncio.run(main())
