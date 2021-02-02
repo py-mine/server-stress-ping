@@ -1,10 +1,11 @@
-from time import perf_counter as pf
+from time import time
 import asyncio
 import struct
 
-host = '0.0.0.0'
-port = 19133
-cons = 20
+host, port = input('Host: ').split(':')
+port = int(port)
+
+cons = 100
 
 response_times = []
 
@@ -13,30 +14,42 @@ request_payload = b'\x01\x00'
 pingpong_payload = b"\t\x01.K\xdb\xf7\xc9\x84';"
 
 async def ping():
-    r, w = await asyncio.open_connection(host, port)
+    try:
+        r, w = await asyncio.open_connection(host, port)
 
-    print('after con')
+        w.write(handshake_payload)
+        await w.drain()
 
-    w.write(handshake_payload)
-    await w.drain()
+        await asyncio.sleep(.1)
 
-    await asyncio.sleep(.1); print('handshake')
+        w.write(request_payload)
+        await w.drain()
 
-    w.write(request_payload)
-    await w.drain()
+        await asyncio.sleep(.1)
 
-    await asyncio.sleep(.1); print('request')
+        start = time()
+        w.write(pingpong_payload)
+        await w.drain()
 
-    w.write(pingpong_payload)
-    await w.drain()
+        await r.read(8)
 
-    await asyncio.sleep(.1); print('pingpong +  wait')
-
-    start = pf()
-    await r.read(8)
-    return pf() - start
+        return time() - start
+    except ConnectionResetError:
+        return -1
 
 async def main():
-    print(await ping())
+    tasks = []
+
+    for _ in range(cons):
+        tasks.append(asyncio.create_task(ping()))
+
+    await asyncio.wait(tasks)
+
+    times = [t.result() for t in tasks]
+
+    avg = round((sum(times) / len(times)) * 1000, 2)
+    max_ = round(max(times) * 1000, 2)
+
+    print(f'Average: {avg}ms | Max: {max_}ms')
 
 asyncio.run(main())
