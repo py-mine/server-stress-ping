@@ -20,12 +20,8 @@ async def ping():
         w.write(handshake_payload)
         await w.drain()
 
-        await asyncio.sleep(.1)
-
         w.write(request_payload)
         await w.drain()
-
-        await asyncio.sleep(.1)
 
         start = time()
         w.write(pingpong_payload)
