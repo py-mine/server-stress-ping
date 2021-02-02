@@ -34,7 +34,7 @@ async def ping():
         await r.read(8)
 
         return time() - start
-    except ConnectionResetError:
+    except ConnectionError:
         return -1
 
 async def main():
